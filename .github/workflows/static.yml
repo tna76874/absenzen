@@ -26,7 +26,7 @@ jobs:
         env:
           CLONE_URL: ${{ secrets.HTML_CLONE_URL }}
         run: |
-          git clone $HTML_CLONE_URL source_code
+          git clone $CLONE_URL source_code
           cd source_code
           pip install .
           untis-insight --lite-html
