@@ -32,7 +32,15 @@ jobs:
           mkdir -p final_site/lab
           mkdir -p content
 
-      # 2. Clone Secret Repo & Build Untis Insight (Main Site)
+      # 3. Build JupyterLite
+      - name: Build JupyterLite
+        run: |
+          python -m pip install -r requirements.txt
+          cp README.md content/
+          # Erstellt final_site/index.html (die wir nicht wollen) und final_site/lab/
+          jupyter lite build --contents content --output-dir final_site
+
+      # 4. Build Untis Insight
       - name: Build Untis Insight
         env:
           CLONE_URL: ${{ secrets.HTML_CLONE_URL }}
@@ -43,19 +51,8 @@ jobs:
           pip install .
           untis-insight --lite-html
           mv *.html index.html
+          # Diese index.html überschreibt nun die jupyter-eigene index.html
           cp index.html ../final_site/
-          # Kopiere die Notebook-Datei für JupyterLite
-          cp webuntis.ipynb ../content/
-
-      # 3. Build JupyterLite
-      - name: Build JupyterLite
-        run: |
-          python -m pip install -r requirements.txt
-          cp README.md content/
-          
-          # Wir bauen direkt in final_site, 
-          # JupyterLite erstellt darin automatisch einen /lab Ordner
-          jupyter lite build --contents content --output-dir final_site
 
       # 4. Upload für GitHub Pages
       - name: Upload artifact
