@@ -50,10 +50,12 @@ jobs:
       # 3. Build JupyterLite
       - name: Build JupyterLite
         run: |
-          # Benötigte Abhängigkeiten für JupyterLite
           python -m pip install -r requirements.txt
-          # Build in das Unterverzeichnis /lab
-          jupyter lite build --contents content --output-dir final_site/lab
+          cp README.md content/
+          
+          # Wir bauen direkt in final_site, 
+          # JupyterLite erstellt darin automatisch einen /lab Ordner
+          jupyter lite build --contents content --output-dir final_site
 
       # 4. Upload für GitHub Pages
       - name: Upload artifact
