@@ -1,0 +1,74 @@
+name: Build and Deploy Combined Site
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Base Repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # 1. Vorbereitung der Ordnerstruktur
+      - name: Prepare Workspace
+        run: |
+          mkdir -p final_site/lab
+          mkdir -p content
+
+      # 2. Clone Secret Repo & Build Untis Insight (Main Site)
+      - name: Build Untis Insight
+        env:
+          CLONE_URL: ${{ secrets.HTML_CLONE_URL }}
+        run: |
+          git clone $CLONE_URL source_code
+          cp config.yml source_code/
+          cd source_code
+          pip install .
+          untis-insight --lite-html
+          mv *.html index.html
+          cp index.html ../final_site/
+          # Kopiere die Notebook-Datei für JupyterLite
+          cp webuntis.ipynb ../content/
+
+      # 3. Build JupyterLite
+      - name: Build JupyterLite
+        run: |
+          # Benötigte Abhängigkeiten für JupyterLite
+          python -m pip install -r requirements.txt
+          # Build in das Unterverzeichnis /lab
+          jupyter lite build --contents content --output-dir final_site/lab
+
+      # 4. Upload für GitHub Pages
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./final_site
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
