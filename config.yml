@@ -35,3 +35,5 @@ schuljahre:
 
 moodle:
   ratio_threshold: 10
+
+redirect_url_to_full: /full
